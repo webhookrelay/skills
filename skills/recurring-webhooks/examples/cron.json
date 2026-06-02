@@ -1,0 +1,13 @@
+{
+  "name": "hourly-health-check",
+  "enabled": true,
+  "recurring": true,
+  "schedule": "0 * * * *",
+  "timezone": "Europe/London",
+  "method": "POST",
+  "destination": "https://example.com/webhook",
+  "payload": "{\"check\":\"hourly\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "webhookrelay-skills",
+  "owner": {
+    "name": "Webhook Relay",
+    "email": "support@webhookrelay.com"
+  },
+  "metadata": {
+    "description": "Agent skills for Webhook Relay: webhook forwarding, transformations, tunnels, and recurring (cron) webhooks.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "webhookrelay-skills",
+      "description": "Set up webhook forwarding (internal and public), write JavaScript transformation functions, expose services with tunnels, and schedule recurring webhooks using the relay CLI.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/webhook-forwarding-internal",
+        "./skills/webhook-forwarding-public",
+        "./skills/webhook-transformations",
+        "./skills/relay-tunnels",
+        "./skills/recurring-webhooks"
+      ]
+    }
+  ]
+}
