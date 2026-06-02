@@ -5,17 +5,7 @@ skill-aware agents) how to drive [Webhook Relay](https://webhookrelay.com) with
 the `relay` CLI and API — forwarding webhooks, transforming them, exposing
 services over tunnels, and scheduling recurring webhooks.
 
-## Skills
-
-| Skill | What it does |
-|---|---|
-| [`webhook-forwarding-internal`](skills/webhook-forwarding-internal) | Receive webhooks on a public endpoint and forward them to localhost / a private network (agent required). |
-| [`webhook-forwarding-public`](skills/webhook-forwarding-public) | Forward webhooks server-side to a public URL, fan out to many destinations (no agent). |
-| [`webhook-transformations`](skills/webhook-transformations) | Write, test, and attach JavaScript (or Lua) functions that reshape webhooks in flight. |
-| [`relay-tunnels`](skills/relay-tunnels) | Expose a local/internal HTTP or TCP service on a public hostname. |
-| [`recurring-webhooks`](skills/recurring-webhooks) | Schedule cron-driven webhooks (interval or specific times/timezone). |
-
-## Install
+## Install all skills
 
 With the [skills CLI](https://www.skills.sh):
 
@@ -23,8 +13,72 @@ With the [skills CLI](https://www.skills.sh):
 npx skills add webhookrelay/skills
 ```
 
-Or as a Claude Code plugin marketplace (see `.claude-plugin/marketplace.json`),
-or by copying any `skills/<name>/` folder into your agent's skills directory.
+Add `-g` to install globally for all your agents. You can also use this repo as a
+Claude Code plugin marketplace (see `.claude-plugin/marketplace.json`), or copy
+any `skills/<name>/` folder into your agent's skills directory. To install just
+one skill, use the `--skill <name>` command shown in each section below.
+
+## Skills
+
+### `webhook-forwarding-internal`
+
+Receive webhooks from external providers (Stripe, GitHub, Shopify, CI systems,
+etc.) on a public Webhook Relay endpoint and forward them to a destination that
+has no public IP — `localhost`, a private LAN host, or a Kubernetes service. The
+`relay` agent holds the outbound connection and performs the final hop, so no
+inbound firewall ports are needed. Best for local development and testing
+provider webhooks against code running on your machine.
+
+```bash
+npx skills add webhookrelay/skills --skill webhook-forwarding-internal
+```
+
+### `webhook-forwarding-public`
+
+Forward webhooks server-side from a public Webhook Relay endpoint to another
+internet-reachable URL — no local agent required. Use it to relay between cloud
+services, put a stable URL in front of an API, fan one webhook out to many
+destinations, or transform payloads in transit (e.g. into Slack/Discord format).
+
+```bash
+npx skills add webhookrelay/skills --skill webhook-forwarding-public
+```
+
+### `webhook-transformations`
+
+Write, test, and attach JavaScript (or Lua) functions that modify webhooks in
+flight — reshape the JSON body, rename/format fields, add/remove headers, change
+the method or path, set the response, drop requests conditionally, or call other
+HTTP APIs. Covers the function API, local testing with `relay function test`,
+and attaching functions to inputs/outputs.
+
+```bash
+npx skills add webhookrelay/skills --skill webhook-transformations
+```
+
+### `relay-tunnels`
+
+Expose a local or internal HTTP/TCP service on a stable public hostname (an
+ngrok-style reverse proxy) without opening firewall ports — share a dev server,
+demo a local web app, expose an internal API, or tunnel TCP (SSH, databases).
+Covers TLS modes, regions, basic auth, host-header rewriting, and running the
+agent as a service.
+
+```bash
+npx skills add webhookrelay/skills --skill relay-tunnels
+```
+
+### `recurring-webhooks`
+
+Schedule cron-driven webhooks that fire automatically — send a recurring HTTP
+request (method, body, headers) to one or more destinations on an interval or at
+specific times/timezone. Use for health checks, heartbeats, scheduled reports,
+or triggering a transformation function on a timer. Managed via the `relay cron`
+command or the `/v1/crons` API.
+
+```bash
+npx skills add webhookrelay/skills --skill recurring-webhooks
+```
 
 ## Prerequisites
 
