@@ -20,6 +20,20 @@ one skill, use the `--skill <name>` command shown in each section below.
 
 ## Skills
 
+### `webhook-debug`
+
+Capture and inspect webhooks with a free, no-signup bin at
+`https://bin.webhookrelay.com` — a public URL that records any HTTP request sent
+to it. See the exact method, headers, query and body a provider sends, stream
+new requests live, mock the response the bin returns
+(status/body/headers/delay/failures), and verify HMAC signatures. No `relay`
+CLI, account, or API key required — just `curl`. A great first stop before
+wiring up forwarding to a real destination.
+
+```bash
+npx skills add webhookrelay/skills --skill webhook-debug
+```
+
 ### `webhook-forwarding-internal`
 
 Receive webhooks from external providers (Stripe, GitHub, Shopify, CI systems,
