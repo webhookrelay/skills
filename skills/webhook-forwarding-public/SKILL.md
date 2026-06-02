@@ -129,3 +129,13 @@ inspect exactly what gets delivered.
 
 A single bucket can mix both: e.g. deliver to a public Slack webhook *and* to a
 local dev server at the same time.
+
+## References
+
+Webhook Relay docs (these `.md` URLs render as plain markdown for easy reading):
+- Forward to a public URL: https://webhookrelay.com/docs/webhooks/public/public-destination.md
+- Multiple destinations: https://webhookrelay.com/docs/webhooks/public/multiple-destination-urls.md — feature overview: https://webhookrelay.com/features/webhook-multiple-destinations.md
+- Filter & route with forwarding rules: https://webhookrelay.com/features/forwarding-rules.md
+- Custom subdomains: https://webhookrelay.com/docs/webhooks/custom-subdomains.md — custom domains: https://webhookrelay.com/docs/webhooks/custom-domains.md
+- Transform in transit with functions: https://webhookrelay.com/docs/webhooks/functions.md
+- Install the CLI: https://webhookrelay.com/docs/installation/cli.md

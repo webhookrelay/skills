@@ -134,3 +134,11 @@ service is up and that `--rewrite-host-header` matches what your app expects.
 - **Webhook forwarding** (`webhook-forwarding-internal` / `-public`): a
   bucket-based pipeline purpose-built for relaying provider webhooks, with
   inputs/outputs, fan-out, retries, and transformation functions.
+
+## References
+
+Webhook Relay docs (these `.md` URLs render as plain markdown for easy reading):
+- Tunnels overview: https://webhookrelay.com/tunnels.md
+- Demoing your local website: https://webhookrelay.com/docs/tunnels/demoing-your-website.md
+- Regions (lower latency): https://webhookrelay.com/docs/tunnels/regions.md
+- Install the CLI: https://webhookrelay.com/docs/installation/cli.md

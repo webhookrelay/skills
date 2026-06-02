@@ -146,3 +146,13 @@ relay input ls          # shows the public endpoint URLs
 - If deliveries fail, check `relay bucket inspect <name>`, confirm the local
   server is up, and watch the agent's terminal logs.
 - For Kubernetes ingress (exposing in-cluster services), see `relay ingress`.
+
+## References
+
+Webhook Relay docs (these `.md` URLs render as plain markdown for easy reading):
+- Receiving webhooks on localhost / private networks: https://webhookrelay.com/docs/webhooks/internal/localhost.md
+- Webhooks to internal servers (overview): https://webhookrelay.com/features/webhook-to-internal-server.md
+- Filter & route with forwarding rules: https://webhookrelay.com/features/forwarding-rules.md
+- Custom subdomains: https://webhookrelay.com/docs/webhooks/custom-subdomains.md — custom domains: https://webhookrelay.com/docs/webhooks/custom-domains.md
+- Transform in transit with functions: https://webhookrelay.com/docs/webhooks/functions.md
+- Install the CLI: https://webhookrelay.com/docs/installation/cli.md

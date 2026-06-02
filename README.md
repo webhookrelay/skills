@@ -51,3 +51,7 @@ All skills use the `relay` CLI:
 - Functions reference: https://webhookrelay.com/docs/webhooks/functions
 - Cron webhooks: https://webhookrelay.com/cron
 - Dashboard: https://my.webhookrelay.com
+- LLM-friendly docs index (append `.md` to any docs URL for plain markdown): https://webhookrelay.com/llms.txt
+
+Each skill's **References** section links the relevant docs as `.md` URLs that
+render as plain markdown — handy for agents to fetch and read directly.

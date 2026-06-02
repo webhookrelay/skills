@@ -135,3 +135,11 @@ scheduled requests arrive, then switch to the real target. The dashboard
   surprises.
 - `payload` is a string — JSON-encode objects (e.g. `"{\"ping\":\"hourly\"}"`).
 - Set `enabled: false` to pause without deleting.
+
+## References
+
+Webhook Relay docs (these `.md` URLs render as plain markdown for easy reading):
+- Using cron webhooks: https://webhookrelay.com/docs/webhooks/cron/using-cron-webhooks.md
+- Recurring webhooks overview: https://webhookrelay.com/cron.md
+- Transform the payload at send time with a function: https://webhookrelay.com/docs/webhooks/functions.md
+- Install the CLI: https://webhookrelay.com/docs/installation/cli.md

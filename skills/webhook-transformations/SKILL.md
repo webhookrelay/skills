@@ -143,3 +143,17 @@ r.setHeader("Content-Type", "application/json")
   formatting in a fan-out.
 - Iterate with `relay function test` before deploying; it's faster than
   round-tripping through a live webhook.
+
+## References
+
+Webhook Relay function docs (these `.md` URLs render as plain markdown for easy reading):
+- Functions overview: https://webhookrelay.com/docs/webhooks/functions.md
+- Read & modify request data: https://webhookrelay.com/docs/webhooks/functions/modify-request.md
+- Encode/decode JSON: https://webhookrelay.com/docs/webhooks/functions/manipulating-json.md
+- Crypto (base64, hmac, sha/md5, encrypt): https://webhookrelay.com/docs/webhooks/functions/crypto-functions.md
+- Make outbound HTTP requests: https://webhookrelay.com/docs/webhooks/functions/make-http-request.md
+- Working with time: https://webhookrelay.com/docs/webhooks/functions/working-with-time.md
+- Accessing metadata: https://webhookrelay.com/docs/webhooks/functions/accessing-metadata.md
+- Parse multipart form data: https://webhookrelay.com/docs/webhooks/functions/multipart-form-data.md — URL-encoded form: https://webhookrelay.com/docs/webhooks/functions/url-encoded-data.md
+- Send emails (Mailgun): https://webhookrelay.com/docs/webhooks/functions/send-emails.md — BigQuery: https://webhookrelay.com/docs/webhooks/functions/big-query.md
+- Deploy functions from CI/CD: https://webhookrelay.com/docs/webhooks/functions/integrate-into-cicd.md
