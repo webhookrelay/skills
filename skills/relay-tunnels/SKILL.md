@@ -84,12 +84,18 @@ relay tunnel create myapp \
 relay tunnel ls
 relay tunnel inspect myapp
 
-# 3. Start the agent to serve it
-relay connect --name myapp            # foreground
+# 3. Start the agent to serve it. Pass the destination again here — `relay
+#    connect` routes to the destination you give it; with only `--name` and no
+#    destination it falls back to http://127.0.0.1:80 (you'll get 502s).
+relay connect --name myapp --crypto flexible http://localhost:3000   # foreground
 #   …or run relay as a background OS service:
 relay service install
 relay service start
 ```
+
+> The same applies when re-attaching after Ctrl-C: re-run the full `relay
+> connect … <destination>` command (the form under "Fastest path"), not
+> `relay connect --name myapp` on its own.
 
 Update or remove later:
 ```bash
@@ -120,7 +126,7 @@ relay connect -n grafana -s grafana -c flexible http://10.0.0.5:3000
 **TCP tunnel (e.g. SSH)**
 ```bash
 relay tunnel create ssh-box --protocol tcp --destination tcp://localhost:22
-relay connect --name ssh-box
+relay connect --name ssh-box --protocol tcp tcp://localhost:22
 ```
 
 ## Verify

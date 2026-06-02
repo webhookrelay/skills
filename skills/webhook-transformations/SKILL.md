@@ -72,6 +72,14 @@ wrapper — just write top-level statements.
 camelCase, `setBody`-style, and PascalCase (`SetRequestBody`) names are all
 accepted; this skill uses the idiomatic camelCase aliases.
 
+> **CLI version note.** `relay function test` and `relay function invoke` for
+> **JavaScript** need a recent `relay` CLI. Older versions fail with a Lua
+> `syntax error` on `.js` files (the driver wasn't honored) or
+> `unknown field "metadata" in reactor_v1.Request` on invoke. If you hit either,
+> run `relay --version` and update the CLI (https://webhookrelay.com/docs/installation/cli).
+> Deployed functions (created with `relay function create -d js` and attached to
+> an output/input) run server-side and are unaffected.
+
 ## Workflow
 
 ### 1. Write the function

@@ -111,9 +111,10 @@ relay bucket create my-app
 # 2. Create the public input (receives webhooks). Prints the endpoint URL.
 relay input create --bucket my-app "default public endpoint"
 
-# 3. Create the internal output (where requests are relayed). Default type is
+# 3. Create the internal output (where requests are relayed). The first
+#    positional arg is the output NAME — always give one. Default type is
 #    internal, so the agent must be running for delivery to happen.
-relay output create --bucket my-app --destination http://localhost:8080/webhook
+relay output create local-app --bucket my-app --destination http://localhost:8080/webhook
 
 # 4. Run the agent so it streams the bucket to the destination
 relay forward -b my-app            # foreground
@@ -122,12 +123,24 @@ relay service install
 relay service start
 ```
 
+> **Name your outputs.** The output name is the first positional argument
+> (`local-app` above). If you omit it, the output is created with an empty name,
+> and creating a second un-named output in the same bucket fails with
+> `output with name '' already exists` — so naming matters as soon as you add a
+> second destination.
+
 Inspect anytime:
 ```bash
 relay bucket ls
 relay bucket inspect my-app
 relay output ls
 relay input ls          # shows the public endpoint URLs
+```
+
+Remove the whole thing when done (`-f` also removes the bucket's inputs/outputs;
+without it, removing a non-empty bucket fails):
+```bash
+relay bucket rm my-app -f
 ```
 
 ## Choosing internal vs public

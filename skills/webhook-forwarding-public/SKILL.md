@@ -61,10 +61,16 @@ relay bucket create to-slack
 # 2. Public input (the URL you give to the provider)
 relay input create --bucket to-slack "incoming"
 
-# 3. Public output (the internet-reachable destination)
-relay output create --bucket to-slack --type public \
+# 3. Public output (the internet-reachable destination). The first positional
+#    arg ("slack") is the output NAME — always give one (see note below).
+relay output create slack --bucket to-slack --type public \
   --destination https://hooks.slack.com/services/T000/B000/XXXX
 ```
+
+> **Name every output.** The output name is the first positional argument. If
+> you omit it the output gets an empty name, and adding a second un-named output
+> to the same bucket fails with `output with name '' already exists` — which
+> breaks fan-out. Give each output a distinct name.
 
 Inspect:
 ```bash
@@ -78,16 +84,16 @@ relay bucket inspect to-slack
 **Fan-out — one webhook to many destinations.** Add several outputs to the same
 bucket; every received webhook is delivered to all of them.
 ```bash
-relay output create -b alerts --type public -d https://hooks.slack.com/services/…
-relay output create -b alerts --type public -d https://discord.com/api/webhooks/…
-relay output create -b alerts --type public -d https://example.com/ingest
+relay output create slack   -b alerts --type public -d https://hooks.slack.com/services/…
+relay output create discord -b alerts --type public -d https://discord.com/api/webhooks/…
+relay output create ingest  -b alerts --type public -d https://example.com/ingest
 ```
 
 **Transform in transit.** Most public destinations expect a specific JSON shape
 (Slack/Discord/Teams). Attach a JavaScript function to the output to reshape the
 payload — see the `webhook-transformations` skill:
 ```bash
-relay output create -b to-slack --type public \
+relay output create slack -b to-slack --type public \
   -d https://hooks.slack.com/services/… \
   --function to-slack-message
 # or attach during forward:
@@ -97,7 +103,7 @@ relay forward --type public -b to-slack -f to-slack-message \
 
 **Override request headers** (e.g. inject auth for the destination):
 ```bash
-relay output create -b to-api --type public -d https://api.example.com/ingest \
+relay output create api -b to-api --type public -d https://api.example.com/ingest \
   --header "Authorization=Bearer XXX" --header "Content-Type=application/json"
 ```
 
