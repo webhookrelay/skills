@@ -1,0 +1,25 @@
+version: "v1"
+filename: to-slack.js
+driver: js          # IMPORTANT: declare the JS driver explicitly
+tests:
+  - name: wraps message into slack text payload
+    request:
+      method: POST
+      body: |
+        {"message": "deploy finished"}
+      header:
+        content-type: application/json
+    expect:
+      request:
+        bodyModified: true
+        bodyContains: "deploy finished"
+        headerModified: true
+
+  - name: rejects invalid json
+    request:
+      method: POST
+      body: "not-json"
+    expect:
+      response:
+        statusEquals: 400
+        bodyContains: "invalid JSON"
