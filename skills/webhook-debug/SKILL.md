@@ -103,7 +103,7 @@ curl -s "$B/v1/bins/$BIN" | jq -r '.requests | sort_by(.receivedAt) | last | .bo
 curl -s "$B/v1/bins/$BIN" | jq '.requests | length'
 
 # A specific header value (case-sensitive key)
-curl -s "$B/v1/bins/$BIN" | jq -r '.requests | last | .header["Content-Type"].values[0]'
+curl -s "$B/v1/bins/$BIN" | jq -r '.requests | sort_by(.receivedAt) | last | .header["Content-Type"].values[0]'
 ```
 
 ### Wait for a webhook to arrive
@@ -112,7 +112,7 @@ Poll until at least one request lands (good for "I just triggered something"):
 
 ```bash
 until [ "$(curl -s "$B/v1/bins/$BIN" | jq '.requests | length')" -gt 0 ]; do sleep 2; done
-curl -s "$B/v1/bins/$BIN" | jq '.requests | last'
+curl -s "$B/v1/bins/$BIN" | jq '.requests | sort_by(.receivedAt) | last'
 ```
 
 ### Stream new requests live (SSE)
@@ -130,17 +130,21 @@ curl -sN "$B/v1/events?stream=$BIN" | grep -m1 '^data:' | sed 's/^data: //' | jq
 
 ### Only process new requests (incremental polling)
 
-`GET` returns the *full* history each time, so track the newest `receivedAt` you
-have already seen and filter client-side instead of reprocessing everything:
+`GET` returns the *full* history each time, so track which request **ids** you
+have already seen and skip them. Dedupe by `id` (a unique, sortable ULID) rather
+than by `receivedAt` — timestamps are whole seconds, so a second request in the
+same second would be missed by a `receivedAt`-based cursor:
 
 ```bash
-SEEN=0
+seen=" "   # ids already printed
 while true; do
-  # Fetch once and reuse the same response for both printing and the SEEN
-  # update — two separate calls could drop a request that arrives between them.
-  RESP=$(curl -s "$B/v1/bins/$BIN")
-  echo "$RESP" | jq -c --argjson seen "$SEEN" '.requests | map(select(.receivedAt > $seen)) | sort_by(.receivedAt)[]'
-  SEEN=$(echo "$RESP" | jq --argjson seen "$SEEN" '[.requests[].receivedAt] | max // $seen')
+  resp=$(curl -s "$B/v1/bins/$BIN")
+  while read -r id; do
+    [ -z "$id" ] && continue
+    case "$seen" in *" $id "*) continue ;; esac          # already handled
+    echo "$resp" | jq -c --arg id "$id" '.requests[] | select(.id == $id)'
+    seen="$seen$id "
+  done <<< "$(echo "$resp" | jq -r '.requests | sort_by(.receivedAt) | .[].id')"
   sleep 3
 done
 ```
@@ -180,7 +184,7 @@ encoded. Supported algorithms: `md5`, `sha1`, `sha256`, `sha512`. Returns
 
 ```bash
 # Verify a GitHub-style sha256 signature against the captured raw body
-RAW=$(curl -s "$B/v1/bins/$BIN" | jq -r '.requests | last | .body')
+RAW=$(curl -s "$B/v1/bins/$BIN" | jq -r '.requests | sort_by(.receivedAt) | last | .body')
 # Note: pipe base64 through `tr -d '\n'` — GNU base64 wraps at 76 cols, which
 # would embed newlines in the body and produce a wrong signature.
 SIG=$(curl -s -X POST "$B/v1/hmac" -H 'Content-Type: application/json' -d "$(jq -nc \
