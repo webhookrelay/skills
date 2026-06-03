@@ -136,9 +136,11 @@ have already seen and filter client-side instead of reprocessing everything:
 ```bash
 SEEN=0
 while true; do
-  curl -s "$B/v1/bins/$BIN" \
-    | jq -c --argjson seen "$SEEN" '.requests | map(select(.receivedAt > $seen)) | sort_by(.receivedAt)[]'
-  SEEN=$(curl -s "$B/v1/bins/$BIN" | jq '[.requests[].receivedAt] | max // 0')
+  # Fetch once and reuse the same response for both printing and the SEEN
+  # update — two separate calls could drop a request that arrives between them.
+  RESP=$(curl -s "$B/v1/bins/$BIN")
+  echo "$RESP" | jq -c --argjson seen "$SEEN" '.requests | map(select(.receivedAt > $seen)) | sort_by(.receivedAt)[]'
+  SEEN=$(echo "$RESP" | jq --argjson seen "$SEEN" '[.requests[].receivedAt] | max // $seen')
   sleep 3
 done
 ```
@@ -179,8 +181,10 @@ encoded. Supported algorithms: `md5`, `sha1`, `sha256`, `sha512`. Returns
 ```bash
 # Verify a GitHub-style sha256 signature against the captured raw body
 RAW=$(curl -s "$B/v1/bins/$BIN" | jq -r '.requests | last | .body')
+# Note: pipe base64 through `tr -d '\n'` — GNU base64 wraps at 76 cols, which
+# would embed newlines in the body and produce a wrong signature.
 SIG=$(curl -s -X POST "$B/v1/hmac" -H 'Content-Type: application/json' -d "$(jq -nc \
-  --arg s "$WEBHOOK_SECRET" --arg b "$(printf %s "$RAW" | base64)" \
+  --arg s "$WEBHOOK_SECRET" --arg b "$(printf %s "$RAW" | base64 | tr -d '\n')" \
   '{algorithm:"sha256", secret:$s, body:$b}')" | jq -r .signature)
 
 echo "expected: sha256=$SIG"
