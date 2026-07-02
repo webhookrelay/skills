@@ -36,8 +36,8 @@ if (email) {
   r.setMethod("POST")
   r.setHeader("Content-Type", "application/json")
 
-  // Keep the API token in function config (relay function config set ...),
-  // not in source.
+  // Keep the API token in function config (set it per-function in the
+  // Webhook Relay dashboard), not in source.
   const token = cfg.get("API_TOKEN")
   if (token) {
     r.setHeader("Authorization", "Bearer " + token)

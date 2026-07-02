@@ -98,14 +98,15 @@ relay function test -f examples/spec.yaml -v
 # Deploy the function
 relay function create --name email-to-api --driver js --source examples/email-to-api.js
 
-# Store any secret it reads with cfg.get(...)
-relay function config set email-to-api API_TOKEN=xxxxx
-
 # Point the bucket's output at YOUR API, running the function on the way out
 relay output create api --bucket email-to-api --type public \
   --destination https://api.example.com/tickets \
   --function email-to-api
 ```
+
+The function reads its API token via `cfg.get("API_TOKEN")`. Set that value for
+the function in the [dashboard](https://my.webhookrelay.com) (Functions → your
+function → Config) so it isn't hard-coded in source.
 
 `--type public` means Webhook Relay delivers server-side — nothing to keep
 running. To reach a service with no public IP (localhost / private LAN), use an
@@ -125,8 +126,8 @@ https://bin.webhookrelay.com and inspect the captured request.
 - **Filter early.** Use `--filter-from` on the address and/or check
   `email.recipient` / `email.subject` in the function, calling
   `r.stopForwarding()` to ignore mail you don't want.
-- **Secrets** belong in `cfg.get(...)` / `relay function config set`, never in
-  source.
+- **Secrets** belong in `cfg.get(...)` (set the value per-function in the
+  dashboard), never in source.
 - **Per-destination shaping.** A function on an output only changes what that
   destination receives; add more outputs (each with its own function) to fan one
   email out to several APIs in different shapes.
