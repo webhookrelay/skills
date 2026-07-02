@@ -1,0 +1,30 @@
+{
+  "from": "jon@example.com",
+  "from_name": "Jon Snow",
+  "recipient": "5519fb0d-997a-46cd-b102-ac990b4c38fa@in.webhookrelay-mail.com",
+  "to": ["5519fb0d-997a-46cd-b102-ac990b4c38fa@in.webhookrelay-mail.com"],
+  "cc": ["team@example.com"],
+  "subject": "Invoice #1042",
+  "date": "Fri, 26 Jun 2026 11:27:41 +0400",
+  "message_id": "C70BE3E7-4B20-4240-A1B8-2D19E0032FFD@gmail.com",
+  "text": "Hi, your invoice is attached.\r\n",
+  "html": "<p>Hi, your invoice is <b>attached</b>.</p>",
+  "headers": {
+    "From": "Jon Snow <jon@example.com>",
+    "To": "5519fb0d-997a-46cd-b102-ac990b4c38fa@in.webhookrelay-mail.com",
+    "Subject": "Invoice #1042",
+    "Content-Type": "multipart/mixed; boundary=...",
+    "Return-Path": "<jon@example.com>"
+  },
+  "spf": "pass",
+  "dkim": "pass",
+  "dmarc": "pass",
+  "attachments": [
+    {
+      "name": "invoice.pdf",
+      "content_type": "application/pdf",
+      "size": 48213,
+      "content": "JVBERi0xLjQKJ..."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+version: "v1"
+filename: email-to-api.js
+driver: js          # IMPORTANT: declare the JS driver explicitly
+tests:
+  - name: maps a parsed email into a ticket payload
+    request:
+      method: POST
+      body: |
+        {"from":"jane@example.com","from_name":"Jane","recipient":"support@yourco.com","subject":"Help with billing","text":"I was double charged.","date":"Fri, 03 Jul 2026 09:00:00 +0000","message_id":"<abc@example.com>"}
+      header:
+        content-type: application/json
+    expect:
+      request:
+        bodyModified: true
+        bodyContains: "Help with billing"
+        methodEquals: POST
+
+  - name: rejects invalid json
+    request:
+      method: POST
+      body: "not-json"
+    expect:
+      response:
+        statusEquals: 400
+        bodyContains: "invalid email"

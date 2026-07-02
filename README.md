@@ -3,7 +3,8 @@
 Agent [Skills](https://agentskills.io/specification) that teach Claude (and other
 skill-aware agents) how to drive [Webhook Relay](https://webhookrelay.com) with
 the `relay` CLI and API — forwarding webhooks, transforming them, exposing
-services over tunnels, and scheduling recurring webhooks.
+services over tunnels, scheduling recurring webhooks, and receiving/parsing
+inbound email.
 
 ## Install all skills
 
@@ -92,6 +93,41 @@ command or the `/v1/crons` API.
 
 ```bash
 npx skills add webhookrelay/skills --skill recurring-webhooks
+```
+
+### `temporary-email`
+
+Create a disposable / temporary inbound email address from the terminal and read
+the mail it receives as JSON — no mailbox, SMTP server, or per-address signup.
+Grab a throwaway inbox for a signup / OTP / confirmation link, receive one-off
+mail in a script or test, or watch an address for incoming messages. Built on
+`relay email create` and the `relay events` pull-delivery queue.
+
+```bash
+npx skills add webhookrelay/skills --skill temporary-email
+```
+
+### `email-parsing-api`
+
+Turn inbound email into structured JSON. Create an inbound address and every
+message is parsed into a stable payload (from, to/cc arrays, subject, text, html,
+headers, spf/dkim/dmarc, attachments), then delivered to your endpoint or pulled
+from the events API — an "email → JSON" API without running SMTP/IMAP.
+
+```bash
+npx skills add webhookrelay/skills --skill email-parsing-api
+```
+
+### `transform-email-to-api-call`
+
+Turn inbound emails into calls to your own API: a bucket with an email address, a
+public output pointing at your API, and a JavaScript function that reshapes the
+parsed email into exactly the request your endpoint expects. Email-driven
+automation — create a ticket/lead/record from an email, or adapt inbound mail to
+any API shape.
+
+```bash
+npx skills add webhookrelay/skills --skill transform-email-to-api-call
 ```
 
 ## Prerequisites

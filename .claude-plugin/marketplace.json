@@ -5,13 +5,13 @@
     "email": "support@webhookrelay.com"
   },
   "metadata": {
-    "description": "Agent skills for Webhook Relay: webhook debugging, forwarding, transformations, tunnels, and recurring (cron) webhooks.",
-    "version": "1.1.0"
+    "description": "Agent skills for Webhook Relay: webhook debugging, forwarding, transformations, tunnels, recurring (cron) webhooks, and inbound email.",
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "webhookrelay-skills",
-      "description": "Debug webhooks with a free capture bin, set up webhook forwarding (internal and public), write JavaScript transformation functions, expose services with tunnels, and schedule recurring webhooks using the relay CLI.",
+      "description": "Debug webhooks with a free capture bin, set up webhook forwarding (internal and public), write JavaScript transformation functions, expose services with tunnels, schedule recurring webhooks, and receive/parse/transform inbound email using the relay CLI.",
       "source": "./",
       "strict": false,
       "skills": [
@@ -20,7 +20,10 @@
         "./skills/webhook-forwarding-public",
         "./skills/webhook-transformations",
         "./skills/relay-tunnels",
-        "./skills/recurring-webhooks"
+        "./skills/recurring-webhooks",
+        "./skills/temporary-email",
+        "./skills/email-parsing-api",
+        "./skills/transform-email-to-api-call"
       ]
     }
   ]
