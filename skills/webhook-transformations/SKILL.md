@@ -58,8 +58,9 @@ wrapper — just write top-level statements.
 **Other globals:**
 - `JSON.parse(...)` / `JSON.stringify(...)` — standard, always available; use
   these for JSON.
-- `cfg.get("KEY")` — read a stored config value / secret (set per-function in
-  the dashboard) so you never hard-code tokens.
+- `cfg.get("KEY")` — read a stored config value / secret so you never hard-code
+  tokens. Set values with `relay function config set <function> KEY=VALUE` (or in
+  the dashboard); list/remove with `relay function config ls|rm <function>`.
 - `console.log(...)` / `console.warn(...)` / `console.error(...)` — appear in
   function logs.
 
