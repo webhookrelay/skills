@@ -8,8 +8,7 @@ description: >-
   the local forwarding agent. Use this when the user wants to test or run a
   webhook handler locally (localhost, 127.0.0.1, a private LAN host, or a
   Kubernetes service) and have a third party POST to it. Triggers: "receive
-  webhooks locally", "test my Stripe/ GitHub webhook on localhost", "forward
-  webhooks to my internal service", "webhook tunnel for development", "no
+  webhooks locally", "test my Stripe/GitHub webhook on localhost", "forward
   public IP for my webhook endpoint". For forwarding to an already-public URL
   instead, use webhook-forwarding-public.
 ---
