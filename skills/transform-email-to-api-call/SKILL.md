@@ -26,13 +26,24 @@ Sender ──▶ <id>@in.webhookrelay-mail.com ──▶ bucket ──▶ functi
 (email)         (inbound address)          (parsed JSON)  (reshape)     (your API's shape)
 ```
 
-## Prerequisites
+## Tooling preference
 
-1. `relay` CLI installed: https://webhookrelay.com/docs/installation/cli (the
-   `email` command needs a recent version).
-2. Logged in: `relay login`. Confirm with `relay bucket ls`.
+Use the Webhook Relay MCP server first when it is connected. This workflow is
+mostly account configuration: create the bucket, create an email input, create
+and test the transform function, create the output, and inspect delivery logs.
+
+Use the `relay` CLI only when MCP is not connected but the CLI is authenticated
+and working, or when you need to run an internal forwarding agent for a private
+destination.
 
 ## 1. Create a bucket with an inbound email address
+
+With MCP, create the bucket, then create an email input on it with
+`create_email_input`. Keep the returned inbound address; that is the address to
+hand out or point mail at. If the destination is public, create the bucket with
+the destination URL or add a public output with the available MCP output tool.
+
+CLI fallback:
 
 ```bash
 relay email create --bucket email-to-api
@@ -83,16 +94,27 @@ Key function API: `r.body` (incoming parsed email), `JSON.parse` / `JSON.stringi
 message. Full reference and more helpers: the `webhook-transformations` skill and
 https://webhookrelay.com/docs/webhooks/functions/manipulating-json.md
 
-## 3. Test it locally (no deploy)
+## 3. Test it before attaching
 
-`relay function test` runs the function against sample requests — use a parsed
-email as the input body. See `examples/spec.yaml`:
+Prefer MCP `create_function` and `execute` with a parsed email payload from the
+`email-parsing-api` skill. Iterate until the transformed request matches the
+API contract.
+
+CLI fallback: `relay function test` runs the function against sample requests —
+use a parsed email as the input body. See `examples/spec.yaml`:
 
 ```bash
 relay function test -f examples/spec.yaml -v
 ```
 
 ## 4. Create the function and attach it to a public output
+
+With MCP, create the function, configure any required secret values through the
+dashboard or available function-config tooling, then attach the function to the
+public output. If the bucket/output does not exist yet, pass the function ID
+when creating the output or bucket.
+
+CLI fallback:
 
 ```bash
 # Deploy the function
@@ -119,10 +141,11 @@ internal output and a running agent instead (see `webhook-forwarding-internal`).
 
 ## 5. Send a test email and verify
 
-Email the address from step 1, then check delivery in the Webhook Relay
-dashboard logs (request in, transformed request out, and your API's response).
-To eyeball exactly what gets sent, temporarily point the output at
-https://bin.webhookrelay.com and inspect the captured request.
+Email the address from step 1, then check delivery with MCP
+`list_webhook_logs` / `get_webhook_log` or in the Webhook Relay dashboard logs
+(request in, transformed request out, and your API's response). To eyeball
+exactly what gets sent, temporarily point the output at https://bin.webhookrelay.com
+and inspect the captured request.
 
 ## Tips
 

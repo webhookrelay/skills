@@ -30,12 +30,42 @@ Use this when both ends live on the internet: putting a stable, provider-facing
 URL in front of an API, relaying between SaaS products, fanning one webhook out
 to many destinations, or applying a transformation in transit.
 
-## Prerequisites
+## Tooling preference
 
-1. `relay` CLI installed: https://webhookrelay.com/docs/installation/cli
-2. Logged in: `relay login`. Confirm with `relay bucket ls`.
+Use the Webhook Relay MCP server first when it is connected. Public forwarding
+is pure account configuration, so MCP can usually do the whole job:
+- create/list buckets and inputs
+- create/list outputs
+- attach transform functions during bucket/output creation
+- set routing rules
+- inspect webhook logs
 
-## Fastest path: `relay forward --type public`
+Use the `relay` CLI only when MCP is not connected but the CLI is authenticated
+and working, or when you need a CLI-only capability.
+
+## MCP-first setup
+
+Create the bucket, public input, and public output with MCP:
+
+1. If a transform is needed, use the `webhook-transformations` skill first:
+   create the function, execute it with representative payloads, and keep the
+   function ID.
+2. Call `create_bucket`:
+   - `name`: stable bucket name, e.g. `to-slack`
+   - `destination`: internet-reachable URL, e.g.
+     `https://hooks.slack.com/services/T000/B000/XXXX`
+   - `internal`: `false`
+   - `output_function_id`: optional transform function ID
+3. Return the `endpoint_url` from the created input to the user; this is the URL
+   the provider should call.
+
+Use MCP `list_buckets`, `list_webhook_logs`, and `get_webhook_log` to inspect
+the configuration and delivery state.
+
+## CLI fallback
+
+If MCP is not available but the CLI is authenticated, `relay forward --type
+public` can create the same configuration:
 
 ```bash
 relay forward --type public --bucket to-slack \
@@ -52,7 +82,7 @@ relay forward --type public --bucket to-slack \
 > With `--type public` the agent is not needed, so you can run the command from
 > anywhere (CI, a one-off shell) and forget about it.
 
-## Explicit setup (recommended for clarity)
+For explicit CLI setup:
 
 ```bash
 # 1. Bucket
@@ -72,7 +102,8 @@ relay output create slack --bucket to-slack --type public \
 > to the same bucket fails with `output with name '' already exists` — which
 > breaks fan-out. Give each output a distinct name.
 
-Inspect:
+Inspect with MCP when available, or CLI fallback:
+
 ```bash
 relay input ls            # shows the public endpoint to share
 relay output ls
@@ -83,6 +114,9 @@ relay bucket inspect to-slack
 
 **Fan-out — one webhook to many destinations.** Add several outputs to the same
 bucket; every received webhook is delivered to all of them.
+
+With MCP, create additional public outputs on the bucket. CLI fallback:
+
 ```bash
 relay output create slack   -b alerts --type public -d https://hooks.slack.com/services/…
 relay output create discord -b alerts --type public -d https://discord.com/api/webhooks/…
@@ -91,17 +125,22 @@ relay output create ingest  -b alerts --type public -d https://example.com/inges
 
 **Transform in transit.** Most public destinations expect a specific JSON shape
 (Slack/Discord/Teams). Attach a JavaScript function to the output to reshape the
-payload — see the `webhook-transformations` skill:
+payload — see the `webhook-transformations` skill. Prefer MCP `create_function`,
+`execute`, and `create_bucket`/`attach_function`. CLI fallback:
+
 ```bash
 relay output create slack -b to-slack --type public \
   -d https://hooks.slack.com/services/… \
   --function to-slack-message
-# or attach during forward:
+# or attach during CLI fallback creation:
 relay forward --type public -b to-slack -f to-slack-message \
   https://hooks.slack.com/services/…
 ```
 
 **Override request headers** (e.g. inject auth for the destination):
+
+Prefer MCP output configuration when available. CLI fallback:
+
 ```bash
 relay output create api -b to-api --type public -d https://api.example.com/ingest \
   --header "Authorization=Bearer XXX" --header "Content-Type=application/json"
@@ -110,6 +149,9 @@ relay output create api -b to-api --type public -d https://api.example.com/inges
 **Custom response to the caller.** Configure the input to return a specific
 status/body, or echo a downstream response, when the provider requires a
 particular acknowledgement:
+
+Prefer MCP input configuration when available. CLI fallback:
+
 ```bash
 relay input create -b to-api "incoming" \
   --status-code 200 --response-body 'ok'
@@ -122,8 +164,9 @@ curl -X POST https://my.webhookrelay.com/v1/webhooks/<id> \
   -H 'Content-Type: application/json' -d '{"text":"hello from relay"}'
 ```
 Check the destination received it. Use the Webhook Relay dashboard logs, or
-point a test output at https://bin.webhookrelay.com / https://webhook.site to
-inspect exactly what gets delivered.
+MCP `list_webhook_logs` / `get_webhook_log`, or point a test output at
+https://bin.webhookrelay.com / https://webhook.site to inspect exactly what gets
+delivered.
 
 ## internal vs public — pick the right output type
 

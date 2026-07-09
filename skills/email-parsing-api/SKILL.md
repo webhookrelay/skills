@@ -51,12 +51,21 @@ Delivered as `Content-Type: application/json` with an
 A sample document is in `examples/parsed-email.json`. Full field reference:
 https://webhookrelay.com/docs/email/payload.md
 
-## Prerequisites
+## Tooling preference
 
-1. `relay` CLI installed: https://webhookrelay.com/docs/installation/cli
-2. Logged in: `relay login`. Confirm with `relay bucket ls`.
+Use the Webhook Relay MCP server first when it is connected. It can create
+buckets, email inputs, public/internal outputs, and inspect webhook logs.
+
+Use the `relay` CLI only when MCP is not connected but the CLI is authenticated
+and working, or when you need to run the local agent for an internal/private
+destination.
 
 ## 1. Create an inbound address
+
+With MCP, create or choose a bucket, then create an email input with
+`create_email_input`. Keep the returned inbound address.
+
+CLI fallback:
 
 ```bash
 relay email create --bucket inbound-mail            # prints the address
@@ -71,6 +80,8 @@ storage. (You can also add an Email input from the dashboard.)
 **a) Deliver to your public API (server-side, no agent).** Add a public output
 pointing at your HTTPS endpoint; every parsed email is POSTed to it 24/7:
 
+Prefer MCP bucket/output configuration when available. CLI fallback:
+
 ```bash
 relay output create ingest --bucket inbound-mail --type public \
   --destination https://api.example.com/inbound-email
@@ -79,6 +90,15 @@ relay output create ingest --bucket inbound-mail --type public \
 **b) Deliver to a local / private service (development).** Use an internal
 output delivered by a running agent — see the `webhook-forwarding-internal`
 skill:
+
+Use MCP to create the internal output when available, then start only the agent
+with CLI:
+
+```bash
+relay forward --bucket inbound-mail
+```
+
+CLI-only fallback when MCP is unavailable:
 
 ```bash
 relay forward --bucket inbound-mail http://localhost:8080/inbound-email
@@ -118,7 +138,8 @@ app.post("/inbound-email", (req, res) => {
 ## Reshape before delivery
 
 Most APIs want a specific shape, not the raw email. Attach a JavaScript function
-to the output to map the parsed email into your schema — see the
+to the output to map the parsed email into your schema. Prefer MCP
+`create_function`, `execute`, and `attach_function` when available — see the
 `transform-email-to-api-call` and `webhook-transformations` skills.
 
 ## References
