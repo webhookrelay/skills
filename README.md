@@ -131,7 +131,7 @@ any API shape.
 npx skills add webhookrelay/skills --skill transform-email-to-api-call
 ```
 
-## Tooling Preference
+## Tooling preference
 
 When the Webhook Relay MCP server is available, use it first for account and
 configuration work: listing buckets/functions/logs, creating buckets, inputs and
