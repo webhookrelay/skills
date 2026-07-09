@@ -73,13 +73,15 @@ wrapper — just write top-level statements.
 camelCase, `setBody`-style, and PascalCase (`SetRequestBody`) names are all
 accepted; this skill uses the idiomatic camelCase aliases.
 
-> **CLI version note.** `relay function test` and `relay function invoke` for
-> **JavaScript** need a recent `relay` CLI. Older versions fail with a Lua
-> `syntax error` on `.js` files (the driver wasn't honored) or
-> `unknown field "metadata" in reactor_v1.Request` on invoke. If you hit either,
-> run `relay --version` and update the CLI (https://webhookrelay.com/docs/installation/cli).
-> Deployed functions (created with `relay function create -d js` and attached to
-> an output/input) run server-side and are unaffected.
+## Tooling preference
+
+Use the Webhook Relay MCP server first when it is connected. It can create
+functions, execute them with synthetic requests, attach them to inputs/outputs,
+and inspect delivery logs after live traffic runs through them.
+
+Use the `relay` CLI only when MCP is not connected but the CLI is authenticated
+and working, or when you need a CLI-only capability such as local file-based test
+specs.
 
 ## Workflow
 
@@ -90,9 +92,31 @@ Put the code in a `.js` file. See `examples/` in this skill:
 - `examples/add-auth-header.js` — inject an auth header from config
 - `examples/spec.yaml` — a test spec for `relay function test`
 
-### 2. Test locally with a spec (no deployment needed)
+If the Webhook Relay MCP server exposes runtime docs, read its JavaScript API
+resource before writing or updating code. JavaScript transforms run in a custom
+runtime and mutate the global `r` object directly; do not write Node.js/browser
+code or handler wrappers.
+
+### 2. Create and test with MCP
+
+When MCP is connected:
+
+1. Create the function with `create_function` (`driver: js`).
+2. Execute it with realistic method/path/query/headers/body values using
+   `execute`.
+3. Iterate until the returned request/response mutation is correct.
+4. Attach it to an input or output with `attach_function`, or pass the function
+   ID while creating a bucket/output.
+
+For output formatting, prefer attaching the function to the output so other
+outputs in the same bucket can receive the original request if needed.
+
+### 3. CLI fallback: test locally with a spec
+
 `relay function test` runs your code against sample requests and asserts the
-result. **Set `driver: js`** in the spec (the `.js` extension also implies it).
+result. Use this when MCP is unavailable or when a checked-in spec file is the
+most convenient validation path. **Set `driver: js`** in the spec (the `.js`
+extension also implies it).
 
 ```bash
 relay function test -f examples/spec.yaml -v
@@ -102,7 +126,14 @@ Assertions available under `expect.request` / `expect.response`:
 `bodyModified`, `bodyEquals`, `bodyContains`, `headerModified`, `headerEquals`,
 `methodEquals`, `pathEquals`, `pathContains`, `queryContains`, `statusEquals`.
 
-### 3. Create (deploy) the function
+> **CLI version note.** `relay function test` and `relay function invoke` for
+> **JavaScript** need a recent `relay` CLI. Older versions fail with a Lua
+> `syntax error` on `.js` files (the driver wasn't honored) or
+> `unknown field "metadata" in reactor_v1.Request` on invoke. If you hit either,
+> run `relay --version` and update the CLI (https://webhookrelay.com/docs/installation/cli).
+> Deployed functions run server-side and are unaffected.
+
+### 4. CLI fallback: create (deploy) the function
 ```bash
 relay function create --name to-slack --driver js --source examples/to-slack.js
 relay function ls
@@ -112,7 +143,7 @@ Update later with:
 relay function update to-slack --source examples/to-slack.js
 ```
 
-### 4. Attach it to an output (or input)
+### 5. CLI fallback: attach it to an output (or input)
 ```bash
 # attach when creating the output
 relay output create -b to-slack --type public \
@@ -127,7 +158,7 @@ relay forward --type public -b to-slack -f to-slack \
 relay input create -b my-app "incoming" --function to-slack
 ```
 
-### 5. Invoke ad-hoc (quick smoke test against the deployed function)
+### 6. CLI fallback: invoke ad-hoc
 ```bash
 relay function invoke to-slack -m POST -b '{"message":"deploy finished"}' \
   --header content-type=application/json
@@ -150,8 +181,8 @@ r.setHeader("Content-Type", "application/json")
 - A function attached to an output only changes what that destination receives;
   other outputs in the bucket are unaffected — great for per-destination
   formatting in a fan-out.
-- Iterate with `relay function test` before deploying; it's faster than
-  round-tripping through a live webhook.
+- Iterate with MCP `execute` before attaching to live traffic. If MCP is not
+  available, use `relay function test` before deploying.
 
 ## References
 

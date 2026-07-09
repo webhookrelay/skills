@@ -3,13 +3,15 @@ name: webhook-forwarding-internal
 description: >-
   Receive webhooks from external providers (Stripe, GitHub, Shopify, Slack,
   CI systems, etc.) and forward them to a destination running behind a firewall
-  or on localhost that has no public IP — using Webhook Relay's `relay` CLI.
-  Use this when the user wants to test or run a webhook handler locally
-  (localhost, 127.0.0.1, a private LAN host, or a Kubernetes service) and have a
-  third party POST to it. Triggers: "receive webhooks locally", "test my Stripe/
-  GitHub webhook on localhost", "forward webhooks to my internal service",
-  "webhook tunnel for development", "no public IP for my webhook endpoint".
-  For forwarding to an already-public URL instead, use webhook-forwarding-public.
+  or on localhost that has no public IP. Configure buckets/inputs/outputs with
+  Webhook Relay MCP tools when available, then use the `relay` CLI only to run
+  the local forwarding agent. Use this when the user wants to test or run a
+  webhook handler locally (localhost, 127.0.0.1, a private LAN host, or a
+  Kubernetes service) and have a third party POST to it. Triggers: "receive
+  webhooks locally", "test my Stripe/ GitHub webhook on localhost", "forward
+  webhooks to my internal service", "webhook tunnel for development", "no
+  public IP for my webhook endpoint". For forwarding to an already-public URL
+  instead, use webhook-forwarding-public.
 ---
 
 # Forwarding webhooks to internal / private destinations
@@ -33,31 +35,50 @@ Provider ──POST──▶ https://my.webhookrelay.com/v1/webhooks/<id>  (inpu
 Key idea: an **internal** output requires the `relay` agent to be **running**,
 because it is the agent that performs the final hop to the private destination.
 
+## Tooling preference
+
+Use the Webhook Relay MCP server first for durable configuration when it is
+connected:
+- create/list buckets and inputs
+- create/list outputs
+- create/test/attach transform functions
+- inspect webhook logs and delivery state
+
+Use the `relay` CLI for the part MCP cannot do: running the local agent that can
+reach `localhost` or a private network. If MCP is not connected but the CLI is
+authenticated and working, the CLI can also create the configuration as a
+fallback.
+
+Before falling back to CLI-created config, confirm there is no usable MCP path.
+If both are used, make sure they target the same Webhook Relay account.
+
 ## Prerequisites
+
+For the runtime agent:
 
 1. The `relay` CLI installed: https://webhookrelay.com/docs/installation/cli
 2. Logged in: `relay login` (or set `RELAY_KEY` / `RELAY_SECRET`). Confirm with
    `relay bucket ls`.
 
-## Fastest path: `relay forward`
+## MCP-first setup
 
-`relay forward` creates a bucket + public input + internal output and then
-**starts the agent and subscribes to the stream** in one command. This is the
-right tool for local development.
+Create the Webhook Relay configuration with MCP tools:
+
+1. If a transform is needed, create it with `create_function`, test it with
+   `execute`, and keep the function ID.
+2. Create the bucket with `create_bucket`:
+   - `name`: stable bucket name, e.g. `my-app`
+   - `destination`: private destination, e.g. `http://localhost:8080/webhook`
+   - `internal`: `true`
+   - `output_function_id`: optional transform function ID
+3. Save the returned input `endpoint_url`; this is the public URL to give to the
+   provider.
+
+Then start the agent against that existing bucket:
 
 ```bash
-# Forward everything sent to a new public endpoint to a local server.
-relay forward --bucket my-app http://localhost:8080/webhook
+relay forward --bucket my-app
 ```
-
-What happens:
-- A bucket named `my-app` is created (if it doesn't exist).
-- A public input endpoint is printed, e.g.
-  `https://my.webhookrelay.com/v1/webhooks/2a1b…` — **give this URL to the
-  provider** (Stripe dashboard, GitHub webhook settings, etc.).
-- The agent stays in the foreground; every received webhook is forwarded to
-  `http://localhost:8080/webhook` and the request/response are logged to your
-  terminal.
 
 Stop with Ctrl-C. Restart later with the **same** command, or just re-attach the
 agent to the existing bucket:
@@ -69,12 +90,14 @@ relay forward --bucket my-app          # no destination → relays all configure
 
 `--type internal` is the default, so you don't need to pass it.
 
+Avoid running `relay forward --bucket my-app http://localhost:8080/webhook`
+after MCP has already created the output unless you intentionally want the CLI
+to create or update configuration. The no-destination form keeps the CLI scoped
+to runtime forwarding.
+
 ### Useful flags
 - `--bucket, -b` — bucket name (defaults to the destination host). Reuse the
   same name to keep one stable public URL across restarts.
-- `--function, -f <name|id>` — attach a JavaScript/Lua transformation to the
-  output (see the `webhook-transformations` skill).
-- `--no-agent` — only create the configuration, do not start streaming.
 - `--max-retries`, `--retry-wait-min`, `--retry-wait-max` — retry behaviour when
   the destination returns `>= 500`.
 
@@ -87,22 +110,32 @@ test request to the **public input URL** (not to localhost):
 # terminal 1 – a server that prints what it receives
 python3 -m http.server 8080
 
-# terminal 2 – forward to it
-relay forward -b my-app http://localhost:8080
+# terminal 2 – run the agent for the MCP-created bucket
+relay forward -b my-app
 
 # terminal 3 – simulate a provider hitting the public endpoint
 curl -X POST https://my.webhookrelay.com/v1/webhooks/<id> -d '{"hello":"world"}'
 ```
 
 You should see the request logged by the agent and delivered to the local
-server. https://webhook.site or https://bin.webhookrelay.com are handy for
+server. Use MCP `list_webhook_logs` / `get_webhook_log` to inspect delivery
+state. https://webhook.site or https://bin.webhookrelay.com are handy for
 inspecting payloads while wiring up a real provider.
 
-## Persistent / explicit setup (CI, servers, scripting)
+## CLI-only fallback
 
-When you want the configuration to exist independently of an interactive
-session (e.g. on a server, or managed by config-as-code), create the pieces
-explicitly and run the agent as a service.
+If MCP is not connected but the `relay` CLI is authenticated and working, the
+CLI can create the configuration and start the agent:
+
+```bash
+relay forward --bucket my-app http://localhost:8080/webhook
+```
+
+This creates the bucket, public input, and internal output, then starts the
+agent in the foreground. The printed public endpoint is the URL to give to the
+provider.
+
+For explicit CLI setup:
 
 ```bash
 # 1. Create the bucket
@@ -131,10 +164,9 @@ relay service start
 
 Inspect anytime:
 ```bash
-relay bucket ls
+relay bucket ls                  # CLI fallback inspection
 relay bucket inspect my-app
-relay output ls
-relay input ls          # shows the public endpoint URLs
+# Prefer MCP list_buckets / get_input / list_webhook_logs when MCP is connected.
 ```
 
 Remove the whole thing when done (`-f` also removes the bucket's inputs/outputs;
@@ -156,8 +188,8 @@ relay bucket rm my-app -f
 - Give providers the **input endpoint URL**, never `localhost`.
 - One bucket can have many outputs → the same webhook fans out to several
   internal destinations.
-- If deliveries fail, check `relay bucket inspect <name>`, confirm the local
-  server is up, and watch the agent's terminal logs.
+- If deliveries fail, inspect the bucket/logs with MCP when available, confirm
+  the local server is up, and watch the agent's terminal logs.
 - For Kubernetes ingress (exposing in-cluster services), see `relay ingress`.
 
 ## References

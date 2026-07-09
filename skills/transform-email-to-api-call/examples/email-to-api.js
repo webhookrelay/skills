@@ -1,6 +1,7 @@
 // email-to-api.js
 // Transform a parsed inbound email into a call to your own API.
-// Attach to a PUBLIC output whose destination is your API endpoint:
+// Prefer MCP create_function/execute/attach_function when connected.
+// CLI fallback for attaching to a PUBLIC output whose destination is your API:
 //   relay function create --name email-to-api --driver js --source email-to-api.js
 //   relay output create api -b email-to-api --type public \
 //     -d https://api.example.com/tickets --function email-to-api
@@ -37,6 +38,7 @@ if (email) {
   r.setHeader("Content-Type", "application/json")
 
   // Keep the API token in function config, not in source:
+  // Prefer MCP/dashboard config when available. CLI fallback:
   //   relay function config set email-to-api API_TOKEN=xxxxx
   const token = cfg.get("API_TOKEN")
   if (token) {

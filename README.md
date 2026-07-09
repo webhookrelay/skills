@@ -2,9 +2,10 @@
 
 Agent [Skills](https://agentskills.io/specification) that teach Claude (and other
 skill-aware agents) how to drive [Webhook Relay](https://webhookrelay.com) with
-the `relay` CLI and API — forwarding webhooks, transforming them, exposing
-services over tunnels, scheduling recurring webhooks, and receiving/parsing
-inbound email.
+MCP tools when available, falling back to the `relay` CLI/API only when an MCP
+server is not connected or a local runtime process is required — forwarding
+webhooks, transforming them, exposing services over tunnels, scheduling
+recurring webhooks, and receiving/parsing inbound email.
 
 ## Install all skills
 
@@ -64,8 +65,8 @@ npx skills add webhookrelay/skills --skill webhook-forwarding-public
 Write, test, and attach JavaScript (or Lua) functions that modify webhooks in
 flight — reshape the JSON body, rename/format fields, add/remove headers, change
 the method or path, set the response, drop requests conditionally, or call other
-HTTP APIs. Covers the function API, local testing with `relay function test`,
-and attaching functions to inputs/outputs.
+HTTP APIs. Covers the function API, MCP-based testing/deployment when available,
+CLI fallbacks, and attaching functions to inputs/outputs.
 
 ```bash
 npx skills add webhookrelay/skills --skill webhook-transformations
@@ -130,9 +131,26 @@ any API shape.
 npx skills add webhookrelay/skills --skill transform-email-to-api-call
 ```
 
-## Prerequisites
+## Tooling Preference
 
-All skills use the `relay` CLI:
+When the Webhook Relay MCP server is available, use it first for account and
+configuration work: listing buckets/functions/logs, creating buckets, inputs and
+outputs, creating/testing/attaching transform functions, setting rules, and
+inspecting delivery logs.
+
+Use the `relay` CLI only when it is genuinely needed:
+- running a local relay agent for internal/private destinations
+- exposing local services over tunnels
+- using a capability that is not exposed by the connected MCP tools
+- no MCP server is connected, but `relay` is authenticated and working
+
+Before falling back to the CLI for configuration, confirm the MCP path is
+unavailable. If both MCP and CLI are used, keep them pointed at the same account
+and avoid recreating configuration in a second context.
+
+## CLI Prerequisites
+
+For CLI fallback or agent/tunnel runtime work:
 
 1. Install it: https://webhookrelay.com/docs/installation/cli
 2. Log in: `relay login` (or set `RELAY_KEY` / `RELAY_SECRET`).
