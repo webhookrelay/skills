@@ -29,49 +29,29 @@ Where a function runs:
 - attached to an **input** → can modify the request on the way in and craft the
   **response** returned to the provider.
 
-## The function API (JavaScript)
+## Discover the deployed runtime
 
-Your code runs against a global request object `r`. There is no `function(){}`
-wrapper — just write top-level statements.
+Call `get_function_runtime` with the function's driver (`js` or `lua`), then
+`get_function_reference` with the module and optional method you need. These
+read-only tools return the deployed catalog version, signatures, limits and
+examples executed in CI. Reuse a reference already in the conversation for
+that version. Keep an existing function's language unless asked to change it.
 
-**Read the incoming request** (read-only):
-- `r.body` — raw request body string
-- `r.method`, `r.path`, `r.rawQuery`
-- `r.headers` — map of request headers
-- `r.query` — parsed query params
-- `r.formData` — parsed form data
+Useful modules: `data`/`jmespath` for reshaping and selecting payloads,
+`schema` for validation, `secure` for HMAC verification, `jwt` for token
+verification, `csv`/`xml`/`yaml` for formats, `time`, `template`, `html`,
+`id`, and `http` for enrichment. Read `core` for request/config globals and
+legacy runtime APIs. BigQuery and Mailgun need explicit credentials.
 
-**Mutate the request** (forwarded to the destination):
-- `r.setBody(string)`
-- `r.setHeader(name, value)` / `r.deleteHeader(name)`
-- `r.setMethod(string)` — e.g. `"POST"`
-- `r.setPath(string)` / `r.setRawQuery(string)`
+JavaScript uses `r.body`, `r.setBody(...)`, `cfg.get(...)` and `JSON`.
+Lua uses `r.RequestBody`, `r:SetRequestBody(...)`, `cfg:GetValue(...)` and
+`require("json")`; its JSON functions return value, error. Shared helpers
+use dot calls in both languages and zero-based indexes in path strings.
 
-**Control the response** returned to the original caller:
-- `r.setResponseBody(string)`
-- `r.setResponseStatus(code)` — e.g. `200`, `400`
-- `r.setResponseHeader(name, value)`
-
-**Flow control:**
-- `r.stopForwarding()` — do not forward this request (use for filtering/dropping)
-
-**Other globals:**
-- `JSON.parse(...)` / `JSON.stringify(...)` — standard, always available; use
-  these for JSON.
-- `cfg.get("KEY")` — read a stored config value / secret so you never hard-code
-  tokens. Set values with `relay function config set <function> KEY=VALUE` (or in
-  the dashboard); list/remove with `relay function config ls|rm <function>`.
-- `console.log(...)` / `console.warn(...)` / `console.error(...)` — appear in
-  function logs.
-
-> Newer platform versions also expose helper modules (`http` for outbound calls,
-> `crypto` for hashing/HMAC/base64, `time`, plus `mailgun`/`bigquery`). Prefer
-> the standard `JSON` + `r.*` API above for portability; reach for the modules
-> only when needed and confirm availability in the dashboard. See
-> https://webhookrelay.com/docs/webhooks/functions for the current reference.
-
-camelCase, `setBody`-style, and PascalCase (`SetRequestBody`) names are all
-accepted; this skill uses the idiomatic camelCase aliases.
+Keep secrets in function configuration. Run `execute` with realistic input
+and inspect the output before attaching. For invalid input and signature
+verification, also exercise rejection behavior. The reference documents the
+API; executing the user's actual scenario proves their transformation.
 
 ## Tooling preference
 
@@ -92,10 +72,8 @@ Put the code in a `.js` file. See `examples/` in this skill:
 - `examples/add-auth-header.js` — inject an auth header from config
 - `examples/spec.yaml` — a test spec for `relay function test`
 
-If the Webhook Relay MCP server exposes runtime docs, read its JavaScript API
-resource before writing or updating code. JavaScript transforms run in a custom
-runtime and mutate the global `r` object directly; do not write Node.js/browser
-code or handler wrappers.
+Use the runtime reference tools above before writing code. If only MCP
+resources are available, read the matching JavaScript or Lua API resource.
 
 ### 2. Create and test with MCP
 
