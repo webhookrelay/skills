@@ -22,6 +22,18 @@ one skill, use the `--skill <name>` command shown in each section below.
 
 ## Skills
 
+### `agentic-webhook-testing`
+
+Let an AI coding agent test and debug a webhook integration through the real
+delivery path with Webhook Relay MCP: send a representative request, wait for
+delivery to settle, inspect the forwarded request and destination response,
+follow transform-function execution IDs into persisted console logs, fix and
+retest transforms, and replay existing events only when explicitly authorized.
+
+```bash
+npx skills add webhookrelay/skills --skill agentic-webhook-testing
+```
+
 ### `webhook-debug`
 
 Capture and inspect webhooks with a free, no-signup bin at
@@ -163,6 +175,8 @@ For CLI fallback or agent/tunnel runtime work:
 - **Output** — a destination requests are relayed to; `internal` (delivered by a
   running agent, e.g. localhost) or `public` (delivered server-side).
 - **Function** — server-side JavaScript/Lua that transforms requests/responses.
+- **Function execution log** — one transform run, including duration, error,
+  request/response mutations, and bounded `console.log` output.
 - **Tunnel** — a public hostname that proxies inbound HTTP/TCP to a local/
   internal service.
 - **Cron** — a scheduled, recurring webhook.
