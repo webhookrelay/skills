@@ -107,6 +107,11 @@ When MCP is connected:
 3. Iterate until the returned request/response mutation is correct.
 4. Attach it to an input or output with `attach_function`, or pass the function
    ID while creating a bucket/output.
+5. After live traffic runs, use `list_function_execution_logs` to find failed or
+   slow runs and `get_function_execution_log` for the full original/modified
+   request, error, response context, and persisted console output. Webhook logs
+   also expose input/output/response-function execution IDs that can be passed
+   directly to `get_function_execution_log`.
 
 For output formatting, prefer attaching the function to the output so other
 outputs in the same bucket can receive the original request if needed.
@@ -178,6 +183,10 @@ r.setHeader("Content-Type", "application/json")
 - Guard against malformed input (wrap `JSON.parse` in try/catch; set a 400
   response and `stopForwarding()` on bad payloads).
 - Keep secrets in `cfg.get(...)`, not in source.
+- Log identifiers and transformation decisions, not authorization headers,
+  signatures, access tokens, or whole sensitive payloads. Function console
+  output is persisted per execution and returned by MCP `execute` and
+  `get_function_execution_log`.
 - A function attached to an output only changes what that destination receives;
   other outputs in the bucket are unaffected — great for per-destination
   formatting in a fan-out.
