@@ -4,8 +4,9 @@ Agent [Skills](https://agentskills.io/specification) that teach Claude (and othe
 skill-aware agents) how to drive [Webhook Relay](https://webhookrelay.com) with
 MCP tools when available, falling back to the `relay` CLI/API only when an MCP
 server is not connected or a local runtime process is required — forwarding
-webhooks, transforming them, exposing services over tunnels, scheduling
-recurring webhooks, and receiving/parsing inbound email.
+webhooks, transforming them, exposing services over tunnels, sending signed
+webhooks to your customers, scheduling recurring webhooks, and
+receiving/parsing inbound email.
 
 ## Install all skills
 
@@ -96,6 +97,19 @@ agent as a service.
 npx skills add webhookrelay/skills --skill relay-tunnels
 ```
 
+### `outbound-webhooks`
+
+Send webhooks from your product to your customers (webhooks as a service):
+define event types, register each customer and their HTTPS endpoints, publish
+an event once, and Webhook Relay delivers signed Standard Webhooks with
+retries, per-endpoint rate limits, health tracking and 35 days of delivery
+history. Covers retry/recover/replay, secret rotation, and migrating from Svix,
+Hookdeck Outpost, Convoy or Hook0 while keeping customers' signing secrets.
+
+```bash
+npx skills add webhookrelay/skills --skill outbound-webhooks
+```
+
 ### `recurring-webhooks`
 
 Schedule cron-driven webhooks that fire automatically — send a recurring HTTP
@@ -180,6 +194,8 @@ For CLI fallback or agent/tunnel runtime work:
 - **Tunnel** — a public hostname that proxies inbound HTTP/TCP to a local/
   internal service.
 - **Cron** — a scheduled, recurring webhook.
+- **Consumer / endpoint / message** — outbound: one of your customers, their
+  HTTPS URL subscribed to event types, and one event you publish to them.
 
 ## Links
 
