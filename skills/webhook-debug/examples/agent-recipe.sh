@@ -9,31 +9,34 @@ set -euo pipefail
 B="https://bin.webhookrelay.com"
 TIMEOUT="${1:-120}"
 
-# 1. Create a bin and capture its ID.
-BIN=$(curl -fsS -X POST "$B/v1/bins" | jq -r .id)
-URL="$B/v1/webhooks/$BIN"
+# 1. Create a bin; the reply carries the ingest, browser and long-poll URLs.
+CREATED=$(curl -fsS -X POST "$B/v1/bins")
+BIN=$(echo "$CREATED" | jq -r .id)
 
 echo "Bin created: $BIN"
-echo "Send your webhook to:  $URL"
-echo "Inspect in a browser:  https://webhookrelay.com/webhook-bin?bin=$BIN"
+echo "Send your webhook to:  $(echo "$CREATED" | jq -r .url)"
+echo "Inspect in a browser:  $(echo "$CREATED" | jq -r .inspectUrl)"
 echo "Waiting up to ${TIMEOUT}s for the first request..."
 
-# 2. Poll until at least one request arrives (or we time out).
-elapsed=0
-until [ "$(curl -fsS "$B/v1/bins/$BIN" | jq '.requests | length')" -gt 0 ]; do
-  sleep 2
-  elapsed=$((elapsed + 2))
-  if [ "$elapsed" -ge "$TIMEOUT" ]; then
+# 2. Long-poll: each call returns as soon as a request arrives, or after 25s
+#    with a nextUrl to keep waiting. No sleep loop needed.
+NEXT=$(echo "$CREATED" | jq -r .requestsUrl)
+deadline=$(( $(date +%s) + TIMEOUT ))
+while :; do
+  PAGE=$(curl -fsS -m 70 "$NEXT")
+  if [ "$(echo "$PAGE" | jq '.requests | length')" -gt 0 ]; then
+    echo "Received! First request:"
+    echo "$PAGE" | jq '.requests[0]'
+    break
+  fi
+  if [ "$(date +%s)" -ge "$deadline" ]; then
     echo "Timed out after ${TIMEOUT}s — no webhook received." >&2
     curl -fsS -X DELETE "$B/v1/bins/$BIN" >/dev/null || true
     exit 1
   fi
+  NEXT=$(echo "$PAGE" | jq -r .nextUrl)
 done
 
-# 3. Print the most recent captured request.
-echo "Received! Latest request:"
-curl -fsS "$B/v1/bins/$BIN" | jq '.requests | sort_by(.receivedAt) | last'
-
-# 4. Clean up.
+# 3. Clean up.
 curl -fsS -X DELETE "$B/v1/bins/$BIN" >/dev/null || true
 echo "Bin deleted."
